@@ -9,133 +9,24 @@ import {
   View,
 } from "react-native";
 
-// ── Mock Data ──────────────────────────────────────────────────────────────
-const POPULAR_BOOKS = [
-  {
-    id: 1,
-    title: "Laskar Pelangi",
-    author: "Andrea Hirata",
-    rating: 4.8,
-    cover: "📘",
-    genre: "Fiksi",
-  },
-  {
-    id: 2,
-    title: "Bumi Manusia",
-    author: "Pramoedya A. Toer",
-    rating: 4.9,
-    cover: "📕",
-    genre: "Sejarah",
-  },
-  {
-    id: 3,
-    title: "Filosofi Teras",
-    author: "Henry Manampiring",
-    rating: 4.7,
-    cover: "📗",
-    genre: "Self-Help",
-  },
-  {
-    id: 4,
-    title: "Atomic Habits",
-    author: "James Clear",
-    rating: 4.9,
-    cover: "📙",
-    genre: "Produktivitas",
-  },
-  {
-    id: 5,
-    title: "Sapiens",
-    author: "Yuval N. Harari",
-    rating: 4.8,
-    cover: "📒",
-    genre: "Sains",
-  },
-];
+// Convex Imports
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useAuthStore } from "../store/authStore";
 
-const ACTIVE_LOANS = [
-  {
-    id: 1,
-    title: "Laskar Pelangi",
-    author: "Andrea Hirata",
-    borrowDate: "2026-02-28",
-    dueDate: "2026-03-14",
-    status: "active",
-  },
-  {
-    id: 2,
-    title: "Atomic Habits",
-    author: "James Clear",
-    borrowDate: "2026-03-01",
-    dueDate: "2026-03-15",
-    status: "active",
-  },
-  {
-    id: 3,
-    title: "Bumi Manusia",
-    author: "Pramoedya A. Toer",
-    borrowDate: "2026-02-15",
-    dueDate: "2026-03-01",
-    status: "overdue",
-  },
-];
-
-const LOAN_HISTORY = [
-  {
-    id: 1,
-    title: "Sapiens",
-    author: "Yuval N. Harari",
-    borrowDate: "2026-01-10",
-    returnDate: "2026-01-24",
-    status: "returned",
-  },
-  {
-    id: 2,
-    title: "Filosofi Teras",
-    author: "Henry Manampiring",
-    borrowDate: "2026-01-05",
-    returnDate: "2026-01-19",
-    status: "returned",
-  },
-  {
-    id: 3,
-    title: "Deep Work",
-    author: "Cal Newport",
-    borrowDate: "2025-12-20",
-    returnDate: "2026-01-05",
-    status: "late",
-  },
-  {
-    id: 4,
-    title: "The Psychology of Money",
-    author: "Morgan Housel",
-    borrowDate: "2025-12-15",
-    returnDate: "2025-12-29",
-    status: "returned",
-  },
-  {
-    id: 5,
-    title: "Educated",
-    author: "Tara Westover",
-    borrowDate: "2025-12-01",
-    returnDate: "2025-12-15",
-    status: "returned",
-  },
-];
-
+// ── Constants (Tetap ada untuk fallback/config) ──────────────────────────
 const FINE_PER_DAY = 1000; // Rp 1.000 per hari
 
 // ── Helper Functions ───────────────────────────────────────────────────────
-function getDaysRemaining(dueDate: string): number {
-  const now = new Date();
-  const due = new Date(dueDate);
-  const diff = due.getTime() - now.getTime();
+function getDaysRemaining(dueDate: number): number {
+  const now = Date.now();
+  const diff = dueDate - now;
   return Math.ceil(diff / (1000 * 60 * 60 * 24));
 }
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("id-ID", {
+function formatDate(date: number | string): string {
+  const d = new Date(date);
+  return d.toLocaleDateString("id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -176,17 +67,34 @@ export default function Dashboard() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  const totalFine = ACTIVE_LOANS.reduce((sum, loan) => {
-    const days = getDaysRemaining(loan.dueDate);
-    if (days < 0) {
-      return sum + Math.abs(days) * FINE_PER_DAY;
-    }
-    return sum;
-  }, 0);
+  // ── Database Queries ───────────────────────────────────────────────────
+  const { userNim } = useAuthStore();
+  
+  // Ambil user dengan NIM demo
+  // Gunakan string literal sebagai fallback jika api object belum ter-generate
+  const user = useQuery(
+    api?.users?.getUserByNim || ("users:getUserByNim" as any), 
+    (api?.users && userNim) ? { nim: userNim } : "skip"
+  );
+  
+  // Hanya jalankan query jika user sudah dimuat dan API sudah siap
+  const activeLoans = useQuery(
+    api?.borrowings?.getActiveByUser || ("borrowings:getActiveByUser" as any), 
+    (api?.borrowings && user?._id) ? { userId: user._id } : "skip"
+  ) || [];
+  
+  const popularBooks = useQuery(
+    api?.books?.getPopularBooks || ("books:getPopularBooks" as any), 
+    (api?.books) ? { limit: 5 } : "skip"
+  ) || [];
+  
+  const loanHistory = useQuery(
+    api?.borrowings?.getRecentHistory || ("borrowings:getRecentHistory" as any), 
+    (api?.borrowings && user?._id) ? { userId: user._id, limit: 5 } : "skip"
+  ) || [];
 
-  const overdueLoanCount = ACTIVE_LOANS.filter(
-    (l) => getDaysRemaining(l.dueDate) < 0
-  ).length;
+  const totalFine = user?.totalFines || 0;
+  const overdueLoanCount = activeLoans.filter((l: any) => l.isOverdue).length;
 
   // ── Colors ─────────────────────────────────────────────────────────────
   const colors = {
@@ -207,6 +115,24 @@ export default function Dashboard() {
     gradient1: "#6C63FF",
     gradient2: "#4ECDC4",
   };
+
+  const isApiReady = !!api?.users;
+
+  if (!isApiReady || user === undefined) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDark ? "#0A0A0F" : "#F0F2F8", padding: 40 }}>
+        <Ionicons name="cloud-offline-outline" size={64} color={colors.accent} style={{ marginBottom: 20 }} />
+        <Text style={{ color: isDark ? "#FFF" : "#000", fontSize: 18, fontWeight: "700", textAlign: "center" }}>
+          {!isApiReady ? "Backend Belum Terhubung" : "Memuat Data Perpustakaan..."}
+        </Text>
+        {!isApiReady && (
+          <Text style={{ color: colors.textSecondary, textAlign: "center", marginTop: 12 }}>
+            Silakan jalankan "npx convex dev" di terminal untuk mengaktifkan database Anda.
+          </Text>
+        )}
+      </View>
+    );
+  }
 
   const shadowStyle = Platform.OS !== "web" ? {
     shadowColor: "#000",
@@ -235,20 +161,20 @@ export default function Dashboard() {
         <View style={styles.greetingContent}>
           <View style={{ flex: 1 }}>
             <Text style={styles.greetingLabel}>Selamat Datang 👋</Text>
-            <Text style={styles.greetingName}>Ahmad Rizky</Text>
+            <Text style={styles.greetingName}>{user?.name || "Tamu"}</Text>
             <Text style={styles.greetingSubtitle}>
-              NIM: 22310048 · Mahasiswa
+              NIM: {user?.nim || "-"} · {user?.role || "Pengguna"}
             </Text>
           </View>
           <View style={styles.greetingAvatar}>
-            <Text style={{ fontSize: 28 }}>👤</Text>
+            <Text style={{ fontSize: 28 }}>{user?.avatarUrl || "👤"}</Text>
           </View>
         </View>
 
         {/* Quick Stats */}
         <View style={styles.quickStats}>
           <View style={styles.quickStatItem}>
-            <Text style={styles.quickStatNumber}>{ACTIVE_LOANS.length}</Text>
+            <Text style={styles.quickStatNumber}>{activeLoans.length}</Text>
             <Text style={styles.quickStatLabel}>Dipinjam</Text>
           </View>
           <View style={[styles.quickStatDivider]} />
@@ -258,7 +184,7 @@ export default function Dashboard() {
           </View>
           <View style={[styles.quickStatDivider]} />
           <View style={styles.quickStatItem}>
-            <Text style={styles.quickStatNumber}>{LOAN_HISTORY.length}</Text>
+            <Text style={styles.quickStatNumber}>{loanHistory.length}</Text>
             <Text style={styles.quickStatLabel}>Total Riwayat</Text>
           </View>
         </View>
@@ -295,11 +221,15 @@ export default function Dashboard() {
           </Text>
         </View>
 
-        {ACTIVE_LOANS.map((loan) => {
-          const daysLeft = getDaysRemaining(loan.dueDate);
-          const isOverdue = daysLeft < 0;
+        {activeLoans.length === 0 ? (
+          <View style={[styles.loanCard, { padding: 20, alignItems: "center", backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={{ color: colors.textSecondary }}>Tidak ada peminjaman aktif</Text>
+          </View>
+        ) : activeLoans.map((loan: any) => {
+          const daysLeft = loan.daysRemaining;
+          const isOverdue = loan.isOverdue;
           const isUrgent = daysLeft >= 0 && daysLeft <= 3;
-          const estimatedFine = isOverdue ? Math.abs(daysLeft) * FINE_PER_DAY : 0;
+          const estimatedFine = loan.estimatedFine;
 
           let statusColor = colors.success;
           let statusBg = colors.successBg;
@@ -320,16 +250,16 @@ export default function Dashboard() {
 
           return (
             <View
-              key={loan.id}
+              key={loan._id}
               style={[styles.loanCard, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]}
             >
               <View style={styles.loanCardTop}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.loanTitle, { color: colors.text }]} numberOfLines={1}>
-                    {loan.title}
+                    {loan.book?.title}
                   </Text>
                   <Text style={[styles.loanAuthor, { color: colors.textSecondary }]}>
-                    {loan.author}
+                    {loan.book?.author}
                   </Text>
                 </View>
                 <View style={[styles.statusBadge, { backgroundColor: statusBg }]}>
@@ -366,15 +296,6 @@ export default function Dashboard() {
                   </Text>
                 </View>
               )}
-
-              {!isOverdue && (
-                <View style={[styles.fineRow, { backgroundColor: colors.warningBg }]}>
-                  <Ionicons name="information-circle-outline" size={14} color={colors.warning} />
-                  <Text style={[styles.fineEstText, { color: colors.warning }]}>
-                    Estimasi denda jika terlambat 1 hari: {formatCurrency(FINE_PER_DAY)}
-                  </Text>
-                </View>
-              )}
             </View>
           );
         })}
@@ -396,13 +317,19 @@ export default function Dashboard() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.booksRow}
         >
-          {POPULAR_BOOKS.map((book) => (
+          {popularBooks.length === 0 ? (
+            <Text style={{ color: colors.textSecondary, marginLeft: 16 }}>Belum ada buku tersedia</Text>
+          ) : popularBooks.map((book: any) => (
             <View
-              key={book.id}
+              key={book._id}
               style={[styles.bookCard, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]}
             >
               <View style={[styles.bookCover, { backgroundColor: colors.accentLight }]}>
-                <Text style={{ fontSize: 36 }}>{book.cover}</Text>
+                {book.coverUrl ? (
+                   <Text style={{ fontSize: 36 }}>{book.coverUrl}</Text>
+                ) : (
+                  <Text style={{ fontSize: 36 }}>📖</Text>
+                )}
               </View>
               <View style={styles.bookInfo}>
                 <Text style={[styles.bookGenre, { color: colors.accent }]}>
@@ -414,7 +341,7 @@ export default function Dashboard() {
                 <Text style={[styles.bookAuthor, { color: colors.textSecondary }]} numberOfLines={1}>
                   {book.author}
                 </Text>
-                <StarRating rating={book.rating} />
+                <StarRating rating={book.rating || 0} />
               </View>
             </View>
           ))}
@@ -433,10 +360,14 @@ export default function Dashboard() {
         </View>
 
         <View style={[styles.historyContainer, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]}>
-          {LOAN_HISTORY.map((item, index) => {
-            const isLate = item.status === "late";
+          {loanHistory.length === 0 ? (
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <Text style={{ color: colors.textSecondary }}>Belum ada riwayat peminjaman</Text>
+            </View>
+          ) : loanHistory.map((item: any, index: number) => {
+            const isLate = item.status === "late" || item.status === "overdue";
             return (
-              <View key={item.id}>
+              <View key={item._id}>
                 <View style={styles.historyItem}>
                   <View style={[
                     styles.historyIndex,
@@ -448,14 +379,14 @@ export default function Dashboard() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.historyTitle, { color: colors.text }]} numberOfLines={1}>
-                      {item.title}
+                      {item.book?.title}
                     </Text>
                     <Text style={[styles.historyAuthor, { color: colors.textSecondary }]}>
-                      {item.author}
+                      {item.book?.author}
                     </Text>
                     <View style={styles.historyDates}>
                       <Text style={[styles.historyDateText, { color: colors.textSecondary }]}>
-                        {formatDate(item.borrowDate)} → {formatDate(item.returnDate)}
+                        {formatDate(item.borrowDate)} → {item.returnDate ? formatDate(item.returnDate) : "Aktif"}
                       </Text>
                     </View>
                   </View>
@@ -471,7 +402,7 @@ export default function Dashboard() {
                     </Text>
                   </View>
                 </View>
-                {index < LOAN_HISTORY.length - 1 && (
+                {index < loanHistory.length - 1 && (
                   <View style={[styles.historyDivider, { backgroundColor: colors.border }]} />
                 )}
               </View>
