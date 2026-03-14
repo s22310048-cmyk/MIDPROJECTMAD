@@ -15,6 +15,20 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npx expo start
    ```
+## Convex Setup for colaborator
+
+1.Install CLI
+
+```bash
+npm install -g convex
+```
+
+2.Install dependencies
+
+```bash
+npm install
+npx convex dev
+```
 
 In the output, you'll find options to open the app in a
 
