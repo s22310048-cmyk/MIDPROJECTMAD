@@ -11,7 +11,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const { setUserStudentId } = useAuthStore();
+  const { login: authLogin } = useAuthStore();
   
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -34,10 +34,16 @@ export default function LoginScreen() {
       const cleanUsername = username.trim().toLowerCase();
       const user = await login({ username: cleanUsername, password });
       
-      console.log("[Login] Login successful for user ID:", user.studentId);
-      setUserStudentId(user.studentId);
+      console.log("[Login] Login successful for user:", user.name, "role:", user.role);
+      authLogin(user.studentId, user.role as "student" | "admin");
       Alert.alert("Berhasil", `Selamat datang kembali, ${user.name}!`);
-      router.replace("/(tabs)/dashboard");
+      
+      // Role-based redirect
+      if (user.role === "admin") {
+        router.replace("/(admin)/dashboard" as any);
+      } else {
+        router.replace("/(user)/dashboard" as any);
+      }
     } catch (error: any) {
       console.error("[Login] Error:", error);
       Alert.alert("Gagal Login", error.message || "Username atau password salah");
@@ -108,7 +114,7 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity 
-            onPress={() => router.push("/forgot-password")}
+            onPress={() => router.push("/forgot-password" as any)}
             style={styles.forgotBtn}
           >
             <Text style={[styles.forgotText, { color: colors.accent }]}>Lupa Password?</Text>
@@ -127,7 +133,7 @@ export default function LoginScreen() {
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>Belum punya akun?</Text>
-          <TouchableOpacity onPress={() => router.push("/register")}>
+          <TouchableOpacity onPress={() => router.push("/register" as any)}>
             <Text style={[styles.registerText, { color: colors.accent }]}> Buat Akun Baru</Text>
           </TouchableOpacity>
         </View>

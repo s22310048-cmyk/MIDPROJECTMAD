@@ -1,7 +1,8 @@
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
-import { Platform, SectionList, StyleSheet, Text, View, ActivityIndicator, ScrollView } from "react-native";
+import { Platform, SectionList, StyleSheet, Text, View, ActivityIndicator, ScrollView, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { useAuthStore } from "../store/authStore";
@@ -13,14 +14,15 @@ import { LoanHistoryItem } from "../components/dashboard/LoanHistoryItem";
 const FINE_PER_DAY = 1000;
 
 export default function Dashboard() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const { userNim } = useAuthStore();
   
   const user = useQuery(
-    api.users.getUserByNim, 
-    userNim ? { nim: userNim } : "skip"
+    api.users.getUserByStudentId, 
+    userNim ? { studentId: userNim } : "skip"
   );
   
   const activeLoans = useQuery(
@@ -29,7 +31,7 @@ export default function Dashboard() {
   ) || [];
   
   const popularBooks = useQuery(
-    api.books.getPopularBooks, 
+    api.books.getTopBooks, 
     { limit: 5 }
   ) || [];
   
@@ -131,12 +133,20 @@ export default function Dashboard() {
   const sections = [
     { title: "Status Peminjaman Aktif", data: activeLoans.length > 0 ? activeLoans.map(l => ({ type: "loan", data: l })) : [{ type: "empty_loan" }] },
     { title: "Rekomendasi Buku Populer", data: [{ type: "popular", data: popularBooks }] },
-    { title: "5 Riwayat Peminjaman Terakhir", data: loanHistory.length > 0 ? loanHistory.map((h, i) => ({ type: "history", data: h, index: i, isLast: i === loanHistory.length - 1 })) : [{ type: "empty_history" }] }
+    { title: "5 Riwayat Peminjaman Terakhir", data: loanHistory.length > 0 ? loanHistory.map((h, i) => ({ type: "history", data: h, index: i, isLast: i === loanHistory.length - 1 })) : [{ type: "empty_history" }] },
+    { title: "Akses Cepat", data: [{ type: "quick_access" }] }
   ];
 
   const renderSectionHeader = ({ section }: { section: any }) => (
     <View style={styles.sectionHeader}>
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {section.title === "Akses Cepat" && (
+          <View style={[styles.sectionIconBadge, { backgroundColor: colors.accentLight }]}>
+            <Ionicons name="grid" size={16} color={colors.accent} />
+          </View>
+        )}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>{section.title}</Text>
+      </View>
     </View>
   );
 
@@ -160,6 +170,50 @@ export default function Dashboard() {
         );
       case "empty_history":
         return <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}><Text style={{ color: colors.textSecondary }}>Belum ada riwayat peminjaman</Text></View>;
+      case "quick_access":
+        return (
+          <View style={styles.quickAccessGrid}>
+            <TouchableOpacity 
+              style={[styles.quickAccessItem, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]} 
+              onPress={() => router.push("/(user)/katalog" as any)}
+            >
+              <View style={[styles.quickAccessIcon, { backgroundColor: 'rgba(108,99,255,0.1)' }]}>
+                <Ionicons name="library" size={24} color={colors.accent} />
+              </View>
+              <Text style={[styles.quickAccessText, { color: colors.text }]}>Cari Buku</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.quickAccessItem, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]} 
+              onPress={() => router.push("/(user)/tebus_point" as any)}
+            >
+              <View style={[styles.quickAccessIcon, { backgroundColor: 'rgba(255,149,0,0.1)' }]}>
+                <Ionicons name="gift" size={24} color="#FF9500" />
+              </View>
+              <Text style={[styles.quickAccessText, { color: colors.text }]}>Tebus Poin</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.quickAccessItem, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]} 
+              onPress={() => router.push("/(user)/riwayat" as any)}
+            >
+              <View style={[styles.quickAccessIcon, { backgroundColor: 'rgba(0,200,83,0.1)' }]}>
+                <Ionicons name="time" size={24} color="#00C853" />
+              </View>
+              <Text style={[styles.quickAccessText, { color: colors.text }]}>Riwayat</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.quickAccessItem, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]} 
+              onPress={() => router.push("/(user)/Profile_Logout" as any)}
+            >
+              <View style={[styles.quickAccessIcon, { backgroundColor: 'rgba(255,59,92,0.1)' }]}>
+                <Ionicons name="person" size={24} color="#FF3B5C" />
+              </View>
+              <Text style={[styles.quickAccessText, { color: colors.text }]}>Profil</Text>
+            </TouchableOpacity>
+          </View>
+        );
       default: return null;
     }
   };
@@ -202,4 +256,38 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: "700", letterSpacing: 0.2 },
   booksRow: { paddingHorizontal: 16, gap: 12, paddingBottom: 16 },
   emptyCard: { marginHorizontal: 16, padding: 20, alignItems: "center", borderRadius: 18, borderWidth: 1, marginBottom: 12 },
+  quickAccessGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    gap: 12,
+    marginBottom: 20,
+  },
+  quickAccessItem: {
+    width: (Platform.OS === 'web' ? 150 : '48%'),
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  quickAccessIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quickAccessText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  sectionIconBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

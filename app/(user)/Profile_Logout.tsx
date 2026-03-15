@@ -11,7 +11,7 @@ export default function ProfileScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const { userNim } = useAuthStore();
-  const user = useQuery(api.users.getUserByNim, userNim ? { nim: userNim } : "skip");
+  const user = useQuery(api.users.getUserByStudentId, userNim ? { studentId: userNim } : "skip");
 
   const colors = {
     bg: isDark ? "#0A0A0F" : "#F0F2F8",

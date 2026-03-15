@@ -56,3 +56,25 @@ export const deleteBook = mutation({
     await ctx.db.delete(args.bookId);
   },
 });
+
+export const getTopBooks = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx: any, args: any) => {
+    const limit = args.limit ?? 5;
+    return await ctx.db
+      .query("books")
+      .order("desc")
+      .take(limit);
+  },
+});
+
+export const getPopularBooks = query({
+  args: { limit: v.optional(v.number()) },
+  handler: async (ctx: any, args: any) => {
+    const limit = args.limit ?? 5;
+    return await ctx.db
+      .query("books")
+      .order("desc")
+      .take(limit);
+  },
+});

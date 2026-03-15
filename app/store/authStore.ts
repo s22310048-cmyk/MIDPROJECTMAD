@@ -4,10 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface AuthState {
   userNim: string | null;
-  userRole: "mahasiswa" | "admin" | "dosen" | null;
+  userRole: "student" | "admin" | null;
   setUserNim: (nim: string | null) => void;
-  setUserRole: (role: "mahasiswa" | "admin" | "dosen" | null) => void;
-  login: (nim: string, role: "mahasiswa" | "admin" | "dosen") => void;
+  setUserRole: (role: "student" | "admin" | null) => void;
+  login: (nim: string, role: "student" | "admin") => void;
   logout: () => void;
 }
 

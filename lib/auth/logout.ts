@@ -12,10 +12,10 @@ export const handleLogout = async () => {
     useAuthStore.getState().logout();
 
     // Redirect to login screen
-    router.replace('/(auth)/login');
+    router.replace('/login' as any);
   } catch (error) {
     console.error('Error during logout:', error);
-    router.replace('/(auth)/login');
+    router.replace('/login' as any);
   }
 };
 

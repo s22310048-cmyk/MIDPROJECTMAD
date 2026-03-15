@@ -69,12 +69,12 @@ export default function Dashboard() {
   const isDark = colorScheme === "dark";
 
   // ── Database Queries ───────────────────────────────────────────────────
-  const { userStudentId } = useAuthStore();
+  const { userNim } = useAuthStore();
   
   // Ambil user dengan Student ID demo
   const user = useQuery(
     api?.users?.getUserByStudentId || ("users:getUserByStudentId" as any), 
-    (api?.users && userStudentId) ? { studentId: userStudentId } : "skip"
+    (api?.users && userNim) ? { studentId: userNim } : "skip"
   );
   
   // Hanya jalankan query jika user sudah dimuat
@@ -146,7 +146,7 @@ export default function Dashboard() {
           User Tidak Ditemukan
         </Text>
         <Text style={{ color: colors.textSecondary, textAlign: "center", marginTop: 12 }}>
-          Data untuk Student ID "{userStudentId}" belum ada di database. Silakan jalankan perintah berikut di terminal:
+          Data untuk Student ID "{userNim}" belum ada di database. Silakan jalankan perintah berikut di terminal:
         </Text>
         <View style={{ backgroundColor: isDark ? "#222" : "#EEE", padding: 12, borderRadius: 8, marginTop: 16 }}>
           <Text style={{ fontFamily: Platform.OS === "ios" ? "Courier" : "monospace", color: colors.accent, fontSize: 12 }}>

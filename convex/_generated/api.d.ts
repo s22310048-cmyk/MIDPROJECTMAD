@@ -10,18 +10,12 @@
 
 import type * as books from "../books.js";
 import type * as borrowings from "../borrowings.js";
-<<<<<<< HEAD
 import type * as catalog from "../catalog.js";
 import type * as dashboard from "../dashboard.js";
 import type * as returns from "../returns.js";
 import type * as scans from "../scans.js";
 import type * as test from "../test.js";
-=======
-import type * as returns from "../returns.js";
-import type * as scans from "../scans.js";
-import type * as test from "../test.js";
 import type * as transactions from "../transactions.js";
->>>>>>> df3d2279fa1317ff3f70367447745f3900eab54c
 import type * as users from "../users.js";
 
 import type {
@@ -33,18 +27,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   books: typeof books;
   borrowings: typeof borrowings;
-<<<<<<< HEAD
   catalog: typeof catalog;
   dashboard: typeof dashboard;
   returns: typeof returns;
   scans: typeof scans;
   test: typeof test;
-=======
-  returns: typeof returns;
-  scans: typeof scans;
-  test: typeof test;
   transactions: typeof transactions;
->>>>>>> df3d2279fa1317ff3f70367447745f3900eab54c
   users: typeof users;
 }>;
 

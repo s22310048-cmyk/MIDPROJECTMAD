@@ -116,62 +116,18 @@ export const getUserByStudentId = query({
 
     return { ...user, totalFines };
   },
-});
-
-export const seedInitialData = mutation({
+});export const seedInitialData = mutation({
   args: {},
   handler: async (ctx: any) => {
     const now = Date.now();
     console.log("[Seeding] Starting data initialization...");
     
-<<<<<<< HEAD
     // 1. Seed/Patch Users
     const studentId = "22310048";
     const existingStudent = await ctx.db.query("users").withIndex("by_studentId", (q: any) => q.eq("studentId", studentId)).first();
     
     if (!existingStudent) {
       console.log("[Seeding] Creating demo student...");
-=======
-    // Admin
-    const admin = await ctx.db.query("users").withIndex("by_nim", (q: any) => q.eq("nim", "admin1")).first();
-    if (!admin) {
-      await ctx.db.insert("users", {
-        name: "Administrator Utama",
-        nim: "admin1",
-        role: "admin",
-        cardId: "ADMIN-CARD-01",
-        points: 0,
-        isActive: true,
-        maxBorrowLimit: 100,
-        currentBorrowCount: 0,
-        totalFines: 0,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    // Staff
-    const staff = await ctx.db.query("users").withIndex("by_nim", (q: any) => q.eq("nim", "staff1")).first();
-    if (!staff) {
-      await ctx.db.insert("users", {
-        name: "Staff Perpustakaan",
-        nim: "staff1",
-        role: "admin",
-        cardId: "STAFF-CARD-01",
-        points: 0,
-        isActive: true,
-        maxBorrowLimit: 100,
-        currentBorrowCount: 0,
-        totalFines: 0,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    // Student
-    const student = await ctx.db.query("users").withIndex("by_nim", (q: any) => q.eq("nim", "22310048")).first();
-    if (!student) {
->>>>>>> df3d2279fa1317ff3f70367447745f3900eab54c
       await ctx.db.insert("users", {
         name: "Ahmad Rizky",
         studentId: studentId,
@@ -236,7 +192,6 @@ export const seedInitialData = mutation({
       }
     }
 
-<<<<<<< HEAD
     // 3. Seed Borrowings for the demo student
     const studentUser = await ctx.db.query("users").withIndex("by_studentId", (q: any) => q.eq("studentId", "22310048")).first();
     if (studentUser) {
@@ -260,69 +215,5 @@ export const seedInitialData = mutation({
       }
     }
     return { success: true, message: "Demo data seeded/updated." };
-=======
-
-
-    // Dummy Transactions
-    const existingTransactions = await ctx.db.query("transactions").collect();
-    if (existingTransactions.length === 0 && student) {
-      const oneDay = 24 * 60 * 60 * 1000;
-      
-      const book1 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9781617294051")).first();
-      const book2 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9780132350884")).first();
-      const book3 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9780134757599")).first();
-      const book4 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9780201633610")).first();
-
-      if (book1) {
-        await ctx.db.insert("transactions", {
-          userId: student._id,
-          bookId: book1._id,
-          transaction_type: "borrow",
-          transaction_date: now - (5 * oneDay), // Dipinjam 5 hari lalu
-          fine_amount: 0,
-          status: "completed",
-          createdAt: now - (5 * oneDay),
-        });
-      }
-
-      if (book2) {
-        await ctx.db.insert("transactions", {
-          userId: student._id,
-          bookId: book2._id,
-          transaction_type: "return",
-          transaction_date: now - (2 * oneDay), // Dikembalikan 2 hari lalu
-          fine_amount: 0,
-          status: "completed",
-          createdAt: now - (2 * oneDay),
-        });
-      }
-
-      if (book3) {
-        await ctx.db.insert("transactions", {
-          userId: student._id,
-          bookId: book3._id,
-          transaction_type: "fine_payment",
-          transaction_date: now - oneDay, // Bayar denda 1 hari lalu
-          fine_amount: 5000,
-          status: "completed",
-          createdAt: now - oneDay,
-        });
-      }
-
-      if (book4 && staff) {
-        await ctx.db.insert("transactions", {
-          userId: staff._id,
-          bookId: book4._id,
-          transaction_type: "borrow",
-          transaction_date: now, // Dipinjam hari ini
-          fine_amount: 0,
-          status: "completed",
-          createdAt: now,
-        });
-      }
-    }
-
-    return { message: "Seeding complete" };
->>>>>>> df3d2279fa1317ff3f70367447745f3900eab54c
   },
 });

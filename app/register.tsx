@@ -57,7 +57,7 @@ export default function RegisterScreen() {
       });
       console.log("[Register] Registration successful!");
       Alert.alert("Berhasil", "Akun berhasil dibuat! Silakan login.");
-      router.replace("/login");
+      router.replace("/login" as any);
     } catch (error: any) {
       console.error("[Register] Error:", error);
       Alert.alert(
@@ -128,12 +128,14 @@ export default function RegisterScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.textSecondary }]}>NIM / Student ID</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>
+              {role === "admin" ? "ID Admin" : "NIM / Student ID"}
+            </Text>
             <View style={[styles.inputContainer, { backgroundColor: isDark ? "#252535" : "#F8F9FE" }]}>
               <Ionicons name="card-outline" size={20} color={colors.accent} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: colors.text }]}
-                placeholder="Ex: 22310048"
+                placeholder={role === "admin" ? "Ex: admin123" : "Ex: 22310048"}
                 placeholderTextColor={isDark ? "#555" : "#CCC"}
                 value={formData.studentId}
                 onChangeText={(text) => setFormData({...formData, studentId: text})}
@@ -215,7 +217,7 @@ export default function RegisterScreen() {
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>Sudah punya akun?</Text>
-          <TouchableOpacity onPress={() => router.push("/login")}>
+          <TouchableOpacity onPress={() => router.push("/login" as any)}>
             <Text style={[styles.loginLabel, { color: colors.accent }]}> Masuk</Text>
           </TouchableOpacity>
         </View>
