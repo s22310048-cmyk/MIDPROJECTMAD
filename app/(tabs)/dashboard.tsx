@@ -33,8 +33,9 @@ function formatDate(date: number | string): string {
   });
 }
 
-function formatCurrency(amount: number): string {
-  return `Rp ${amount.toLocaleString("id-ID")}`;
+function formatCurrency(amount: number | undefined | null): string {
+  const val = amount || 0;
+  return `Rp ${val.toLocaleString("id-ID")}`;
 }
 
 // ── Star Rating Component ──────────────────────────────────────────────────
@@ -68,29 +69,28 @@ export default function Dashboard() {
   const isDark = colorScheme === "dark";
 
   // ── Database Queries ───────────────────────────────────────────────────
-  const { userNim } = useAuthStore();
+  const { userStudentId } = useAuthStore();
   
-  // Ambil user dengan NIM demo
-  // Gunakan string literal sebagai fallback jika api object belum ter-generate
+  // Ambil user dengan Student ID demo
   const user = useQuery(
-    api?.users?.getUserByNim || ("users:getUserByNim" as any), 
-    (api?.users && userNim) ? { nim: userNim } : "skip"
+    api?.users?.getUserByStudentId || ("users:getUserByStudentId" as any), 
+    (api?.users && userStudentId) ? { studentId: userStudentId } : "skip"
   );
   
-  // Hanya jalankan query jika user sudah dimuat dan API sudah siap
+  // Hanya jalankan query jika user sudah dimuat
   const activeLoans = useQuery(
     api?.borrowings?.getActiveByUser || ("borrowings:getActiveByUser" as any), 
     (api?.borrowings && user?._id) ? { userId: user._id } : "skip"
   ) || [];
   
   const popularBooks = useQuery(
-    api?.books?.getPopularBooks || ("books:getPopularBooks" as any), 
-    (api?.books) ? { limit: 5 } : "skip"
+    api?.catalog?.getCatalog || ("catalog:getCatalog" as any), 
+    (api?.catalog) ? {} : "skip"
   ) || [];
   
   const loanHistory = useQuery(
     api?.borrowings?.getRecentHistory || ("borrowings:getRecentHistory" as any), 
-    (api?.borrowings && user?._id) ? { userId: user._id, limit: 5 } : "skip"
+    (api?.borrowings && user?._id) ? { userId: user._id, limit: 10 } : "skip"
   ) || [];
 
   const totalFine = user?.totalFines || 0;
@@ -120,16 +120,39 @@ export default function Dashboard() {
 
   if (!isApiReady || user === undefined) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: isDark ? "#0A0A0F" : "#F0F2F8", padding: 40 }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg, padding: 40 }}>
         <Ionicons name="cloud-offline-outline" size={64} color={colors.accent} style={{ marginBottom: 20 }} />
-        <Text style={{ color: isDark ? "#FFF" : "#000", fontSize: 18, fontWeight: "700", textAlign: "center" }}>
+        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700", textAlign: "center" }}>
           {!isApiReady ? "Backend Belum Terhubung" : "Memuat Data Perpustakaan..."}
         </Text>
-        {!isApiReady && (
+        {!isApiReady ? (
           <Text style={{ color: colors.textSecondary, textAlign: "center", marginTop: 12 }}>
-            Silakan jalankan "npx convex dev" di terminal untuk mengaktifkan database Anda.
+            Antarmuka API Convex belum ter-generate. Silakan jalankan "npx convex dev" di terminal.
+          </Text>
+        ) : (
+          <Text style={{ color: colors.textSecondary, textAlign: "center", marginTop: 12 }}>
+            Sedang menyambungkan ke database cloud...
           </Text>
         )}
+      </View>
+    );
+  }
+
+  if (user === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.bg, padding: 40 }}>
+        <Ionicons name="person-add-outline" size={64} color={colors.warning} style={{ marginBottom: 20 }} />
+        <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700", textAlign: "center" }}>
+          User Tidak Ditemukan
+        </Text>
+        <Text style={{ color: colors.textSecondary, textAlign: "center", marginTop: 12 }}>
+          Data untuk Student ID "{userStudentId}" belum ada di database. Silakan jalankan perintah berikut di terminal:
+        </Text>
+        <View style={{ backgroundColor: isDark ? "#222" : "#EEE", padding: 12, borderRadius: 8, marginTop: 16 }}>
+          <Text style={{ fontFamily: Platform.OS === "ios" ? "Courier" : "monospace", color: colors.accent, fontSize: 12 }}>
+            npx convex run users:seedInitialData
+          </Text>
+        </View>
       </View>
     );
   }
@@ -163,7 +186,7 @@ export default function Dashboard() {
             <Text style={styles.greetingLabel}>Selamat Datang 👋</Text>
             <Text style={styles.greetingName}>{user?.name || "Tamu"}</Text>
             <Text style={styles.greetingSubtitle}>
-              NIM: {user?.nim || "-"} · {user?.role || "Pengguna"}
+              ID: {user?.studentId || "-"} · {user?.role || "Pengguna"}
             </Text>
           </View>
           <View style={styles.greetingAvatar}>
@@ -226,10 +249,11 @@ export default function Dashboard() {
             <Text style={{ color: colors.textSecondary }}>Tidak ada peminjaman aktif</Text>
           </View>
         ) : activeLoans.map((loan: any) => {
-          const daysLeft = loan.daysRemaining;
-          const isOverdue = loan.isOverdue;
+          if (!loan) return null;
+          const daysLeft = loan.daysRemaining || 0;
+          const isOverdue = !!loan.isOverdue;
           const isUrgent = daysLeft >= 0 && daysLeft <= 3;
-          const estimatedFine = loan.estimatedFine;
+          const estimatedFine = loan.estimatedFine || 0;
 
           let statusColor = colors.success;
           let statusBg = colors.successBg;
@@ -325,15 +349,15 @@ export default function Dashboard() {
               style={[styles.bookCard, { backgroundColor: colors.card, borderColor: colors.border }, shadowStyle as any]}
             >
               <View style={[styles.bookCover, { backgroundColor: colors.accentLight }]}>
-                {book.coverUrl ? (
-                   <Text style={{ fontSize: 36 }}>{book.coverUrl}</Text>
+                {book.coverImage ? (
+                   <Text style={{ fontSize: 36 }}>{book.coverImage}</Text>
                 ) : (
                   <Text style={{ fontSize: 36 }}>📖</Text>
                 )}
               </View>
               <View style={styles.bookInfo}>
                 <Text style={[styles.bookGenre, { color: colors.accent }]}>
-                  {book.genre}
+                  {book.category}
                 </Text>
                 <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={2}>
                   {book.title}
@@ -365,7 +389,9 @@ export default function Dashboard() {
               <Text style={{ color: colors.textSecondary }}>Belum ada riwayat peminjaman</Text>
             </View>
           ) : loanHistory.map((item: any, index: number) => {
-            const isLate = item.status === "late" || item.status === "overdue";
+            if (!item) return null;
+            const isCompleted = item.status === "returned";
+            const isLate = isCompleted ? (item.returnDate > item.dueDate) : (Date.now() > item.dueDate);
             return (
               <View key={item._id}>
                 <View style={styles.historyItem}>
@@ -392,13 +418,13 @@ export default function Dashboard() {
                   </View>
                   <View style={[
                     styles.historyBadge,
-                    { backgroundColor: isLate ? colors.dangerBg : colors.successBg }
+                    { backgroundColor: isLate ? colors.dangerBg : (isCompleted ? colors.successBg : colors.accentLight) }
                   ]}>
                     <Text style={[
                       styles.historyBadgeText,
-                      { color: isLate ? colors.danger : colors.success }
+                      { color: isLate ? colors.danger : (isCompleted ? colors.success : colors.accent) }
                     ]}>
-                      {isLate ? "Terlambat" : "Tepat Waktu"}
+                      {isLate ? "Terlambat" : (isCompleted ? "Kembali" : "Dipinjam")}
                     </Text>
                   </View>
                 </View>

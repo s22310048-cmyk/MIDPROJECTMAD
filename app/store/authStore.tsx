@@ -1,26 +1,26 @@
 import { useState, useEffect } from "react";
 
 // Simple observer pattern to keep state in sync
-let currentNim: string | null = "22310048";
-const listeners = new Set<(nim: string | null) => void>();
+let currentStudentId: string | null = null;
+const listeners = new Set<(id: string | null) => void>();
 
 export const useAuthStore = () => {
-  const [nim, setNim] = useState(currentNim);
+  const [studentId, setStudentId] = useState(currentStudentId);
 
   useEffect(() => {
-    const listener = (newNim: string | null) => setNim(newNim);
+    const listener = (newId: string | null) => setStudentId(newId);
     listeners.add(listener);
     return () => {
       listeners.delete(listener);
     };
   }, []);
 
-  const setUserNim = (newNim: string | null) => {
-    currentNim = newNim;
-    listeners.forEach((l) => l(newNim));
+  const setUserStudentId = (newId: string | null) => {
+    currentStudentId = newId;
+    listeners.forEach((l) => l(newId));
   };
 
-  const logout = () => setUserNim(null);
+  const logout = () => setUserStudentId(null);
 
-  return { userNim: nim, setUserNim, logout };
+  return { userStudentId: studentId, setUserStudentId, logout };
 };
