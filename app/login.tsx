@@ -71,10 +71,8 @@ export default function LoginScreen() {
           <View style={[styles.iconContainer, { backgroundColor: colors.accentLight }]}>
             <Ionicons name="library" size={40} color={colors.accent} />
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>LibraryHub</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            Manajemen Perpustakaan Pintar
-          </Text>
+          <Text style={[styles.title, { color: colors.text }]}>Library Management System</Text>
+          
         </View>
 
         <View style={[styles.form, { backgroundColor: colors.card }]}>
@@ -161,7 +159,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 32,
+    fontSize: 21,
     fontWeight: "800",
     letterSpacing: 1,
   },
