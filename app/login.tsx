@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Alert } from "react-native";
-import React, { useState } from "react";
-import { useRouter } from "expo-router";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { api } from "../convex/_generated/api";
 import { useAuthStore } from "./store/authStore";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -71,7 +71,7 @@ export default function LoginScreen() {
           <View style={[styles.iconContainer, { backgroundColor: colors.accentLight }]}>
             <Ionicons name="library" size={40} color={colors.accent} />
           </View>
-          <Text style={[styles.title, { color: colors.text }]}>LibriHub</Text>
+          <Text style={[styles.title, { color: colors.text }]}>LibraryHub</Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Manajemen Perpustakaan Pintar
           </Text>
