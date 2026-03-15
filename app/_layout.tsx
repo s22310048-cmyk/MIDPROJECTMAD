@@ -6,6 +6,7 @@ import { convexClient } from "./lib/convexClient";
 import { useAuthStore } from "./store/authStore";
 
 export default function RootLayout() {
+<<<<<<< HEAD
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const { userStudentId } = useAuthStore();
@@ -38,6 +39,15 @@ export default function RootLayout() {
         <Stack.Screen name="register" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="(tabs)" />
+=======
+  return (
+    <ConvexProvider client={convexClient}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(user)" />
+        <Stack.Screen name="(admin)" />
+>>>>>>> df3d2279fa1317ff3f70367447745f3900eab54c
       </Stack>
     </ConvexProvider>
   );
