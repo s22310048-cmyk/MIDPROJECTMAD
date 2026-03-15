@@ -153,4 +153,25 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_scanType", ["scanType"])
     .index("by_scannedAt", ["scannedAt"]),
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 🧾 TABEL TRANSAKSI (Transaction History)
+  // Menyimpan riwayat semua jenis transaksi perpustakaan
+  // ══════════════════════════════════════════════════════════════════════════
+  transactions: defineTable({
+    userId: v.id("users"),                  // User yang melakukan transaksi
+    bookId: v.optional(v.id("books")),      // Buku yang terkait transaksi (opsional)
+    transaction_type: v.union(              // Jenis transaksi
+      v.literal("borrow"),
+      v.literal("return"),
+      v.literal("fine_payment")
+    ),
+    transaction_date: v.number(),           // Tanggal transaksi (timestamp)
+    fine_amount: v.number(),                // Jumlah denda (opsional, isi 0 jika tidak ada)
+    status: v.string(),                     // Status (contoh: "completed", "pending")
+    createdAt: v.number(),
+  })
+    .index("by_type", ["transaction_type"])
+    .index("by_date", ["transaction_date"])
+    .index("by_userId", ["userId"]),
 });

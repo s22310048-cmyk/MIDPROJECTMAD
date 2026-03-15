@@ -113,10 +113,28 @@ export const seedInitialData = mutation({
     const admin = await ctx.db.query("users").withIndex("by_nim", (q: any) => q.eq("nim", "admin1")).first();
     if (!admin) {
       await ctx.db.insert("users", {
-        name: "Administrator Library",
+        name: "Administrator Utama",
         nim: "admin1",
         role: "admin",
-        cardId: "ADMIN-CARD",
+        cardId: "ADMIN-CARD-01",
+        points: 0,
+        isActive: true,
+        maxBorrowLimit: 100,
+        currentBorrowCount: 0,
+        totalFines: 0,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+
+    // Staff
+    const staff = await ctx.db.query("users").withIndex("by_nim", (q: any) => q.eq("nim", "staff1")).first();
+    if (!staff) {
+      await ctx.db.insert("users", {
+        name: "Staff Perpustakaan",
+        nim: "staff1",
+        role: "admin",
+        cardId: "STAFF-CARD-01",
         points: 0,
         isActive: true,
         maxBorrowLimit: 100,
@@ -166,6 +184,67 @@ export const seedInitialData = mutation({
           isActive: true,
           createdAt: now,
           updatedAt: now,
+        });
+      }
+    }
+
+
+
+    // Dummy Transactions
+    const existingTransactions = await ctx.db.query("transactions").collect();
+    if (existingTransactions.length === 0 && student) {
+      const oneDay = 24 * 60 * 60 * 1000;
+      
+      const book1 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9781617294051")).first();
+      const book2 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9780132350884")).first();
+      const book3 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9780134757599")).first();
+      const book4 = await ctx.db.query("books").withIndex("by_isbn", (q) => q.eq("isbn", "9780201633610")).first();
+
+      if (book1) {
+        await ctx.db.insert("transactions", {
+          userId: student._id,
+          bookId: book1._id,
+          transaction_type: "borrow",
+          transaction_date: now - (5 * oneDay), // Dipinjam 5 hari lalu
+          fine_amount: 0,
+          status: "completed",
+          createdAt: now - (5 * oneDay),
+        });
+      }
+
+      if (book2) {
+        await ctx.db.insert("transactions", {
+          userId: student._id,
+          bookId: book2._id,
+          transaction_type: "return",
+          transaction_date: now - (2 * oneDay), // Dikembalikan 2 hari lalu
+          fine_amount: 0,
+          status: "completed",
+          createdAt: now - (2 * oneDay),
+        });
+      }
+
+      if (book3) {
+        await ctx.db.insert("transactions", {
+          userId: student._id,
+          bookId: book3._id,
+          transaction_type: "fine_payment",
+          transaction_date: now - oneDay, // Bayar denda 1 hari lalu
+          fine_amount: 5000,
+          status: "completed",
+          createdAt: now - oneDay,
+        });
+      }
+
+      if (book4 && staff) {
+        await ctx.db.insert("transactions", {
+          userId: staff._id,
+          bookId: book4._id,
+          transaction_type: "borrow",
+          transaction_date: now, // Dipinjam hari ini
+          fine_amount: 0,
+          status: "completed",
+          createdAt: now,
         });
       }
     }

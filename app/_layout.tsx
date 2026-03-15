@@ -5,18 +5,13 @@ import { ConvexProvider } from "convex/react";
 import { convexClient } from "./lib/convexClient";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
-
   return (
     <ConvexProvider client={convexClient}>
-      <Stack>
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-          }}
-        />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(user)" />
+        <Stack.Screen name="(admin)" />
       </Stack>
     </ConvexProvider>
   );
